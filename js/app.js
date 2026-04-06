@@ -1,354 +1,455 @@
-/* ═══════════════════════════════════════════════════════════
-   STRICT SKILLS TEMPLATE — Scroll-Driven Animation Engine
-   Padded-cover, circle-wipe hero, deep staggered animations
-   ═══════════════════════════════════════════════════════════ */
-
-(function () {
+(() => {
   "use strict";
 
-  const FRAME_SPEED = 1.0; 
-  const IMAGE_SCALE = 1.02; // slightly scale to hide border edge pixel glitches
-  const FIRST_BATCH = 20;
+  // =========================
+  // DOM
+  // =========================
+  const loader = document.getElementById("loader");
+  const loaderBar = document.getElementById("loader-bar");
+  const loaderPercent = document.getElementById("loader-percent");
 
-  const loader      = document.getElementById("loader");
-  const loaderBar   = document.getElementById("loader-bar");
-  const loaderPct   = document.getElementById("loader-percent");
-  const canvas      = document.getElementById("canvas");
-  const ctx         = canvas.getContext("2d");
-  const scrollBox   = document.getElementById("scroll-container");
-  const canvasWrap  = document.getElementById("canvas-wrap");
-  const heroSection = document.getElementById("hero");
-  const darkOverlay = document.getElementById("dark-overlay");
+  const sequenceCanvas = document.getElementById("sequence-canvas");
+  const sequenceCtx = sequenceCanvas?.getContext("2d");
 
-  const frames = [];
+  const revealEls = document.querySelectorAll(".reveal");
+  const marquee = document.querySelector(".marquee-text");
+  const casesTrack = document.getElementById("cases-track");
+  const leadForm = document.getElementById("lead-form");
+
+  const scrollSections = [...document.querySelectorAll(".scroll-section")];
+  const statNumbers = [...document.querySelectorAll(".stat-number")];
+  const videoSequenceSection = document.getElementById("video-sequence");
+
+  // =========================
+  // CONFIG
+  // =========================
+  const CONFIG = {
+    frameCount: 120, // если кадров 60 — поменяй здесь на 60
+    firstBatch: 12,
+    framePath: (i) => `frames/frame_${String(i).padStart(4, "0")}.webp`,
+    canvasScale: 1.02,
+
+    sectionFadeWindow: 0.18,
+    sectionMoveY: 38,
+    sectionMoveX: 70,
+
+    marqueeSpeed: 0.22,
+    casesExtraShift: 120,
+  };
+
+  // =========================
+  // STATE
+  // =========================
+  let frames = [];
   let currentFrame = 0;
-  let totalFrames = 0;
-  let bgColor = "#ffffff"; // fallback to white
+  let loaderHidden = false;
+  let rafPending = false;
+  let statsAnimated = false;
+  let ticking = false;
 
-  const lenis = new Lenis({
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    smoothWheel: true,
-  });
-  lenis.on("scroll", ScrollTrigger.update);
-  gsap.ticker.add((time) => lenis.raf(time * 1000));
-  gsap.ticker.lagSmoothing(0);
-  lenis.stop();
+  // =========================
+  // LOADER FALLBACK
+  // =========================
+  const forceHideLoaderTimeout = setTimeout(() => {
+    hideLoader();
+  }, 4500);
 
-  // Split hero heading for animation
-  const heading = document.getElementById("hero-heading");
-  if (heading) {
-    heading.innerHTML = heading.innerHTML
-      .split(/<br\s*\/?>/i)
-      .map(line => line.split(/\s+/).map(w => `<span class="word">${w}</span>`).join(" "))
-      .join("<br>");
+  // =========================
+  // HELPERS
+  // =========================
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
   }
 
-  const TOTAL_FRAMES_COUNT = 120; // Hardcoded to prevent 404 console errors from auto-detect
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
 
-  async function preloadFrames() {
-    totalFrames = TOTAL_FRAMES_COUNT;
-    
-    // Instead of scrolling on scrollBox (which is absolute now), 
-    // we set the height of the outer #video-sequence
-    const vidSeq = document.getElementById("video-sequence");
-    
-    if (!totalFrames) { 
-      if(vidSeq) vidSeq.style.height = "800vh";
-      hideLoader(); 
-      return; 
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function hideLoader() {
+    if (loaderHidden) return;
+    loaderHidden = true;
+    loader.classList.add("hidden");
+    clearTimeout(forceHideLoaderTimeout);
+  }
+
+  // =========================
+  // CANVAS
+  // =========================
+  function resizeSequenceCanvas() {
+    if (!sequenceCanvas || !sequenceCtx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = sequenceCanvas.getBoundingClientRect();
+
+    sequenceCanvas.width = Math.round(rect.width * dpr);
+    sequenceCanvas.height = Math.round(rect.height * dpr);
+
+    sequenceCtx.setTransform(1, 0, 0, 1, 0, 0);
+    sequenceCtx.scale(dpr, dpr);
+
+    drawSequenceFrame(currentFrame);
+  }
+
+  function drawSequenceFrame(index) {
+    if (!sequenceCanvas || !sequenceCtx) return;
+
+    const img = frames[index];
+    const rect = sequenceCanvas.getBoundingClientRect();
+
+    const cw = rect.width;
+    const ch = rect.height;
+
+    sequenceCtx.clearRect(0, 0, cw, ch);
+
+    if (!img || !img.complete) {
+      drawFallbackVisual(cw, ch);
+      return;
     }
 
-    function preloadImages() {
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+
+    const ratio = Math.max(cw / iw, ch / ih) * CONFIG.canvasScale;
+    const dw = iw * ratio;
+    const dh = ih * ratio;
+    const dx = (cw - dw) / 2;
+    const dy = (ch - dh) / 2;
+
+    sequenceCtx.drawImage(img, dx, dy, dw, dh);
+  }
+
+  function requestSequenceDraw(index) {
+    currentFrame = index;
+
+    if (rafPending) return;
+    rafPending = true;
+
+    requestAnimationFrame(() => {
+      drawSequenceFrame(currentFrame);
+      rafPending = false;
+    });
+  }
+
+  function drawFallbackVisual(cw, ch) {
+    if (!sequenceCtx) return;
+
+    const gradient = sequenceCtx.createLinearGradient(0, 0, cw, ch);
+    gradient.addColorStop(0, "#f8fbff");
+    gradient.addColorStop(1, "#e2e8f0");
+
+    sequenceCtx.fillStyle = gradient;
+    sequenceCtx.fillRect(0, 0, cw, ch);
+
+    const centerX = cw / 2;
+    const centerY = ch / 2;
+
+    sequenceCtx.save();
+    sequenceCtx.translate(centerX, centerY);
+
+    const time = currentFrame / CONFIG.frameCount;
+
+    for (let i = 0; i < 5; i++) {
+      const radius = 90 + i * 55 + time * 30;
+      sequenceCtx.beginPath();
+      sequenceCtx.arc(
+        Math.sin(time * Math.PI * 2 + i * 0.7) * 18,
+        Math.cos(time * Math.PI * 2 + i * 0.7) * 18,
+        radius,
+        0,
+        Math.PI * 2
+      );
+      sequenceCtx.strokeStyle = `rgba(37,99,235,${0.09 - i * 0.014})`;
+      sequenceCtx.lineWidth = 1.5;
+      sequenceCtx.stroke();
+    }
+
+    sequenceCtx.beginPath();
+    sequenceCtx.moveTo(-80, -120);
+    sequenceCtx.bezierCurveTo(-130, -20, -100, 80, -40, 130);
+    sequenceCtx.bezierCurveTo(-10, 150, 10, 150, 40, 130);
+    sequenceCtx.bezierCurveTo(100, 80, 130, -20, 80, -120);
+    sequenceCtx.bezierCurveTo(55, -165, -55, -165, -80, -120);
+    sequenceCtx.closePath();
+
+    sequenceCtx.fillStyle = "rgba(255,255,255,0.78)";
+    sequenceCtx.fill();
+    sequenceCtx.strokeStyle = "rgba(15,23,42,0.06)";
+    sequenceCtx.lineWidth = 2;
+    sequenceCtx.stroke();
+
+    sequenceCtx.restore();
+  }
+
+  // =========================
+  // PRELOAD
+  // =========================
+  function preloadFrames() {
+    return new Promise((resolve) => {
       let loaded = 0;
-      let currentIndex = 1;
-      const maxWorkers = 8; // Limit concurrent requests to prevent server hang
 
-      function worker() {
-        if (currentIndex > totalFrames) return;
-        const idx = currentIndex++;
-        const num = (idx).toString().padStart(4, "0");
+      if (!sequenceCanvas) {
+        hideLoader();
+        resolve();
+        return;
+      }
+
+      for (let i = 1; i <= CONFIG.frameCount; i++) {
         const img = new Image();
-        const onComplete = () => {
+
+        img.onload = () => {
+          frames[i - 1] = img;
           loaded++;
-          if (img.complete && img.naturalWidth !== 0) {
-            frames[idx - 1] = img;
-             if (idx - 1 === currentFrame) {
-              requestAnimationFrame(() => drawFrame(currentFrame));
-             }
-          }
+          updateLoader(loaded);
 
-          const firstBatch = Math.min(10, totalFrames);
-          
-          if (loaded <= firstBatch) {
-            loaderBar.style.width = (loaded / firstBatch) * 100 + "%";
-            loaderPct.innerText = Math.round((loaded / firstBatch) * 100) + "%";
-          }
-
-          if (loaded === firstBatch) {
+          if (!loaderHidden && loaded >= CONFIG.firstBatch && frames[0]) {
             hideLoader();
-          } 
-          
-          if (loaded < totalFrames) {
-            worker();
+            drawSequenceFrame(0);
+          }
+
+          if (loaded === CONFIG.frameCount) {
+            resolve();
           }
         };
 
-        img.onload = onComplete;
-        img.onerror = onComplete;
-        img.src = `frames/frame_${num}.webp`;
-      }
+        img.onerror = () => {
+          loaded++;
+          updateLoader(loaded);
 
-      // Start workers
-      for (let i = 0; i < maxWorkers; i++) worker();
-    }
-
-    preloadImages();
-    resizeCanvas();
-    if(vidSeq) vidSeq.style.height = "500vh";
-  }
-
-  function resizeCanvas() {
-    const dpr = devicePixelRatio || 1;
-    canvas.width = innerWidth * dpr;
-    canvas.height = innerHeight * dpr;
-    canvas.style.width = innerWidth + "px";
-    canvas.style.height = innerHeight + "px";
-    ctx.scale(dpr, dpr);
-  }
-
-  function sampleBg(i) {
-    bgColor = "#ffffff";
-  }
-
-  function drawFrame(i) {
-    const img = frames[i]; if (!img) return;
-    const cw = canvas.width / (devicePixelRatio || 1);
-    const ch = canvas.height / (devicePixelRatio || 1);
-    const iw = img.naturalWidth, ih = img.naturalHeight;
-    const scale = Math.max(cw / iw, ch / ih) * IMAGE_SCALE;
-    const dw = iw * scale, dh = ih * scale;
-    const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
-    
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, cw, ch);
-    ctx.drawImage(img, dx, dy, dw, dh);
-    if (i % 20 === 0) sampleBg(i);
-  }
-
-  addEventListener("resize", () => { resizeCanvas(); if (frames[currentFrame]) drawFrame(currentFrame); });
-
-  function hideLoader() {
-    sampleBg(0);
-    drawFrame(0);
-    loader.classList.add("hidden");
-    lenis.start();
-    animateHero();
-    initScrollSystem();
-  }
-
-  function animateHero() {
-    const tl = gsap.timeline({ delay: 0.3 });
-    tl.from(".hero-label", { opacity: 0, y: 20, duration: 0.7, ease: "power2.out" })
-      .from(".hero-heading .word", { opacity: 0, y: 40, duration: 0.8, stagger: 0.1, ease: "power3.out" }, "-=0.4")
-      .from(".hero-tagline", { opacity: 0, y: 20, duration: 0.7, ease: "power2.out" }, "-=0.3");
-  }
-
-  function initScrollSystem() {
-    gsap.registerPlugin(ScrollTrigger);
-    if (totalFrames > 0) initFrameScroll();
-    initHeroTransition();
-    positionSections();
-    initSectionAnimations();
-    initCounters();
-    initMarquee();
-    if (document.getElementById("dark-overlay")) initDarkOverlay(0.44, 0.64); // Matches new Stats bounds
-
-    // New Sections Animations
-    initHorizontalGallery();
-    initTeamAnimations();
-  }
-
-  function initHorizontalGallery() {
-    const track = document.getElementById("cases-track");
-    if (!track) return;
-    
-    // Calculate distance to move based on track width vs window width
-    function getScrollAmount() {
-      return -(track.scrollWidth - window.innerWidth + window.innerWidth * 0.1);
-    }
-
-    gsap.to(track, {
-      x: getScrollAmount,
-      ease: "none",
-      scrollTrigger: {
-        trigger: ".horizontal-cases",
-        start: "top top",
-        end: () => `+=${getScrollAmount() * -1}`,
-        pin: true,
-        scrub: 1,
-        invalidateOnRefresh: true
-      }
-    });
-  }
-
-  function initTeamAnimations() {
-    const members = document.querySelectorAll(".team-member");
-    if(!members.length) return;
-    
-    members.forEach((member) => {
-      gsap.from(member.querySelectorAll(".team-member-name, .team-member-role"), {
-        y: 40, opacity: 0, duration: 1, ease: "power3.out", stagger: 0.1,
-        scrollTrigger: {
-          trigger: member,
-          start: "top 85%",
-        }
-      });
-    });
-  }
-
-  // ─── Hero Reveal ──────────────────────────
-  function initHeroTransition() {
-    ScrollTrigger.create({
-      trigger: scrollBox, start: "top top", end: "bottom bottom", scrub: true,
-      onUpdate: (self) => {
-        const p = self.progress;
-        // Fade hero out quickly
-        if(heroSection) heroSection.style.opacity = Math.max(0, 1 - p * 15);
-      }
-    });
-  }
-
-  function initFrameScroll() {
-    ScrollTrigger.create({
-      trigger: scrollBox, start: "top top", end: "bottom bottom", scrub: true,
-      onUpdate: (self) => {
-        const acc = Math.min(self.progress * FRAME_SPEED, 1);
-        const idx = Math.min(Math.floor(acc * totalFrames), totalFrames - 1);
-        if (idx !== currentFrame) {
-          currentFrame = idx;
-          requestAnimationFrame(() => drawFrame(currentFrame));
-        }
-      },
-    });
-  }
-
-  function positionSections() {
-    const vidSeq = document.getElementById("video-sequence");
-    const h = vidSeq ? vidSeq.offsetHeight : scrollBox.offsetHeight;
-    
-    document.querySelectorAll(".scroll-section:not(.section-hero)").forEach((s) => {
-      const enter = parseFloat(s.dataset.enter) / 100;
-      const leave = parseFloat(s.dataset.leave) / 100;
-      s.style.top = ((enter + leave) / 2) * h + "px";
-      s.style.transform = "translateY(-50%)";
-    });
-  }
-
-  function initSectionAnimations() {
-    document.querySelectorAll(".scroll-section:not(.section-hero)").forEach((section) => {
-      const type = section.dataset.animation;
-      const persist = section.dataset.persist === "true";
-      const enter = parseFloat(section.dataset.enter) / 100;
-      const leave = parseFloat(section.dataset.leave) / 100;
-      const children = section.querySelectorAll(".section-label, .section-heading, .section-body, .cta-button, .stat, .feature-item");
-
-      const tl = gsap.timeline({ paused: true });
-      switch (type) {
-        case "fade-up":
-          tl.from(children, { y: 50, stagger: 0.12, duration: 0.9, ease: "power3.out" }); break;
-        case "slide-left":
-          tl.from(children, { x: -80, stagger: 0.14, duration: 0.9, ease: "power3.out" }); break;
-        case "slide-right":
-          tl.from(children, { x: 80, stagger: 0.14, duration: 0.9, ease: "power3.out" }); break;
-        case "scale-up":
-          tl.from(children, { scale: 0.85, stagger: 0.12, duration: 1.0, ease: "power2.out" }); break;
-        case "stagger-up":
-          tl.from(children, { y: 60, stagger: 0.15, duration: 0.8, ease: "power3.out" }); break;
-      }
-
-      ScrollTrigger.create({
-        trigger: scrollBox, start: "top top", end: "bottom bottom",
-        onUpdate: (self) => {
-          const p = self.progress;
-          const fadeDur = 0.03;
-          if (p >= enter && p <= leave) {
-            const innerP = Math.min(1, (p - enter) / fadeDur);
-            section.style.opacity = innerP;
-            tl.progress(innerP);
-          } else if (p > leave) {
-            if (persist) { section.style.opacity = 1; tl.progress(1); }
-            else {
-              section.style.opacity = Math.max(0, 1 - (p - leave) / fadeOut);
-              if (section.style.opacity == 0) { tl.pause(0); }
-            }
-          } else {
-            section.style.opacity = 0; tl.pause(0);
+          if (!loaderHidden && loaded >= CONFIG.firstBatch) {
+            hideLoader();
           }
-        },
-      });
+
+          if (loaded === CONFIG.frameCount) {
+            resolve();
+          }
+        };
+
+        img.src = CONFIG.framePath(i);
+      }
     });
   }
 
-  function initCounters() {
-    document.querySelectorAll(".stat-number").forEach((el) => {
-      const target = parseFloat(el.dataset.value);
-      const dec = parseInt(el.dataset.decimals || "0");
-      const enter = parseFloat(el.closest(".scroll-section").dataset.enter) / 100;
-      let done = false;
-      ScrollTrigger.create({
-        trigger: scrollBox, start: "top top", end: "bottom bottom",
-        onUpdate: (self) => {
-          if (self.progress >= enter && !done) {
-            done = true;
-            gsap.fromTo(el, { textContent: 0 }, {
-              textContent: target, duration: 2, ease: "power1.out",
-              snap: { textContent: dec === 0 ? 1 : 0.01 },
-              onUpdate() { el.textContent = parseFloat(el.textContent).toFixed(dec); }
-            });
-          } else if (self.progress < enter - 0.05 && done) { done = false; el.textContent = "0"; }
-        },
-      });
-    });
+  function updateLoader(loaded) {
+    const visiblePercent = clamp(
+      Math.round((loaded / CONFIG.firstBatch) * 100),
+      0,
+      100
+    );
+
+    loaderBar.style.width = `${visiblePercent}%`;
+    loaderPercent.textContent = `${visiblePercent}%`;
   }
 
-  function initMarquee() {
-    document.querySelectorAll(".marquee-wrap").forEach((el) => {
-      const speed = parseFloat(el.dataset.scrollSpeed) || -25;
-      const enter = parseFloat(el.dataset.enter) / 100;
-      const leave = parseFloat(el.dataset.leave) / 100;
-      gsap.to(el.querySelector(".marquee-text"), {
-        xPercent: speed, ease: "none",
-        scrollTrigger: { trigger: scrollBox, start: "top top", end: "bottom bottom", scrub: true },
-      });
-      ScrollTrigger.create({
-        trigger: scrollBox, start: "top top", end: "bottom bottom",
-        onUpdate: (self) => {
-          const p = self.progress, f = 0.04;
-          let o = 0;
-          if (p >= enter - f && p <= enter) o = (p - (enter - f)) / f;
-          else if (p > enter && p < leave) o = 1;
-          else if (p >= leave && p <= leave + f) o = 1 - (p - leave) / f;
-          el.style.opacity = o;
-        },
-      });
-    });
-  }
-
-  function initDarkOverlay(enter, leave) {
-    const f = 0.02; // Reduced to sync fade directly into 2% gaps
-    ScrollTrigger.create({
-      trigger: scrollBox, start: "top top", end: "bottom bottom", scrub: true,
-      onUpdate: (self) => {
-        const p = self.progress;
-        let o = 0;
-        if (p >= enter - f && p <= enter) o = (p - (enter - f)) / f;
-        else if (p > enter && p < leave) o = 0.88; // 0.88-0.92 from skill
-        else if (p >= leave && p <= leave + f) o = 0.88 * (1 - (p - leave) / f);
-        darkOverlay.style.opacity = o;
+  // =========================
+  // REVEALS
+  // =========================
+  function initRevealAnimations() {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          }
+        });
       },
+      { threshold: 0.12 }
+    );
+
+    revealEls.forEach((el) => observer.observe(el));
+  }
+
+  // =========================
+  // VIDEO SEQUENCE
+  // =========================
+  function updateVideoSequence() {
+    if (!videoSequenceSection) return;
+
+    const rect = videoSequenceSection.getBoundingClientRect();
+    const totalScrollable = videoSequenceSection.offsetHeight - window.innerHeight;
+
+    const scrolled = clamp(-rect.top, 0, totalScrollable);
+    const progress = totalScrollable > 0 ? scrolled / totalScrollable : 0;
+
+    // frame progression
+    const frameIndex = Math.floor(progress * (CONFIG.frameCount - 1));
+    requestSequenceDraw(frameIndex);
+
+    // scroll overlay sections
+    updateScrollSections(progress);
+
+    // stats
+    if (!statsAnimated && progress >= 0.5) {
+      statsAnimated = true;
+      animateStats();
+    }
+  }
+
+  function updateScrollSections(progress) {
+    scrollSections.forEach((section) => {
+      const enter = parseFloat(section.dataset.enter || "0");
+      const leave = parseFloat(section.dataset.leave || "1");
+      const animation = section.dataset.animation || "fade-up";
+      const inner = section.querySelector(".section-inner");
+
+      if (!inner) return;
+
+      const range = leave - enter;
+      const local = clamp((progress - enter) / range, 0, 1);
+      const isActive = progress >= enter && progress <= leave;
+
+      let opacity = 0;
+      let moveX = 0;
+      let moveY = CONFIG.sectionMoveY;
+      let scale = 0.985;
+
+      if (isActive) {
+        const fadeIn = clamp(local / CONFIG.sectionFadeWindow, 0, 1);
+        const fadeOut = clamp((1 - local) / CONFIG.sectionFadeWindow, 0, 1);
+        opacity = Math.min(fadeIn, fadeOut);
+
+        if (animation === "slide-left") {
+          moveX = lerp(-CONFIG.sectionMoveX, 0, opacity);
+          moveY = lerp(14, 0, opacity);
+        } else if (animation === "slide-right") {
+          moveX = lerp(CONFIG.sectionMoveX, 0, opacity);
+          moveY = lerp(14, 0, opacity);
+        } else if (animation === "stagger-up") {
+          moveY = lerp(42, 0, opacity);
+        } else {
+          moveY = lerp(CONFIG.sectionMoveY, 0, opacity);
+        }
+
+        scale = lerp(0.985, 1, opacity);
+      }
+
+      section.style.opacity = opacity.toFixed(3);
+      inner.style.opacity = opacity.toFixed(3);
+      inner.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) scale(${scale})`;
     });
   }
 
-  preloadFrames();
+  // =========================
+  // STATS
+  // =========================
+  function animateStats() {
+    statNumbers.forEach((el) => {
+      const target = parseInt(el.dataset.value || "0", 10);
+      const duration = 1600;
+      const start = performance.now();
+
+      function tick(now) {
+        const progress = clamp((now - start) / duration, 0, 1);
+        const eased = easeOutCubic(progress);
+        el.textContent = Math.round(target * eased);
+
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    });
+  }
+
+  // =========================
+  // MARQUEE
+  // =========================
+  function updateMarquee() {
+    if (!marquee) return;
+    const y = window.scrollY || window.pageYOffset || 0;
+    marquee.style.transform = `translateX(${-((y * CONFIG.marqueeSpeed) % 700)}px)`;
+  }
+
+  // =========================
+  // CASES
+  // =========================
+  function updateCases() {
+    if (!casesTrack) return;
+
+    const section = document.getElementById("cases");
+    if (!section) return;
+
+    const rect = section.getBoundingClientRect();
+    const viewportH = window.innerHeight;
+
+    const progress = clamp((viewportH - rect.top) / (viewportH + rect.height), 0, 1);
+    const maxShift = Math.max(0, casesTrack.scrollWidth - window.innerWidth + CONFIG.casesExtraShift);
+
+    casesTrack.style.transform = `translate3d(${-progress * maxShift}px, 0, 0)`;
+  }
+
+  // =========================
+  // FORM
+  // =========================
+  function initForm() {
+    if (!leadForm) return;
+
+    leadForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(leadForm);
+      const name = (formData.get("name") || "").toString().trim();
+      const phone = (formData.get("phone") || "").toString().trim();
+      const service = (formData.get("service") || "").toString().trim();
+
+      if (!name || !phone || !service) {
+        alert("Пожалуйста, заполните все поля.");
+        return;
+      }
+
+      alert("Заявка отправлена. Здесь можно подключить Telegram / CRM / n8n.");
+      leadForm.reset();
+    });
+  }
+
+  // =========================
+  // RAF SCROLL LOOP
+  // =========================
+  function handleScroll() {
+    if (ticking) return;
+
+    ticking = true;
+    requestAnimationFrame(() => {
+      updateVideoSequence();
+      updateMarquee();
+      updateCases();
+      ticking = false;
+    });
+  }
+
+  // =========================
+  // INIT
+  // =========================
+  async function init() {
+    resizeSequenceCanvas();
+
+    window.addEventListener("resize", () => {
+      resizeSequenceCanvas();
+      updateVideoSequence();
+      updateCases();
+    });
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    await preloadFrames();
+
+    if (!loaderHidden) {
+      hideLoader();
+    }
+
+    initRevealAnimations();
+    initForm();
+
+    updateVideoSequence();
+    updateMarquee();
+    updateCases();
+
+    drawSequenceFrame(0);
+  }
+
+  init();
 })();
