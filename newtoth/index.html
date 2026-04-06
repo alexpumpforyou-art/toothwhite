@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Все Свои — Стоматологическая клиника</title>
+  <meta
+    name="description"
+    content="Имплантация, виниры и ортодонтия в Москве. Диагностика, понятный план лечения и прогнозируемый результат."
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-brand">ВСЕ СВОИ</div>
+    <div class="loader-bar-track">
+      <div id="loader-bar"></div>
+    </div>
+    <div id="loader-percent">0%</div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header" id="site-header">
+    <a href="#hero" class="header-logo">Все Свои</a>
+
+    <nav aria-label="Основная навигация">
+      <ul class="header-nav">
+        <li><a href="#services">Услуги</a></li>
+        <li><a href="#cases">Кейсы</a></li>
+        <li><a href="#team">Команда</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#contact">Запись</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Floating CTA -->
+  <a href="#contact" class="floating-cta">Записаться</a>
+
+  <main>
+
+    <!-- HERO -->
+    <section class="section-hero" id="hero">
+      <div class="hero-grid">
+        <div class="hero-copy reveal">
+          <span class="hero-label">Стоматология / Москва</span>
+
+          <h1 class="hero-heading">
+            Имплантация,<br />
+            виниры и<br />
+            ортодонтия
+          </h1>
+
+          <p class="hero-tagline">
+            Понятный план лечения, цифровая диагностика и прогнозируемый результат без хаоса и лишних процедур.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#contact" class="cta-button">Записаться на консультацию</a>
+            <a href="#cases" class="secondary-button">Посмотреть кейсы</a>
+          </div>
+
+          <div class="hero-trust">
+            <div class="trust-item">
+              <span class="trust-number">15</span>
+              <span class="trust-label">лет опыта</span>
+            </div>
+            <div class="trust-item">
+              <span class="trust-number">45+</span>
+              <span class="trust-label">клиник</span>
+            </div>
+            <div class="trust-item">
+              <span class="trust-number">120k</span>
+              <span class="trust-label">пациентов</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-fade"></div>
+    </section>
+
+    <!-- VIDEO SEQUENCE -->
+    <section id="video-sequence">
+      <div class="video-sequence-sticky">
+        <canvas id="sequence-canvas"></canvas>
+
+        <div class="sequence-darken"></div>
+        <div class="sequence-noise"></div>
+        <div class="sequence-vignette"></div>
+        <div class="sequence-overlay"></div>
+
+        <div class="marquee-wrap sequence-marquee">
+          <div class="marquee-text">ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ /</div>
+        </div>
+
+        <div id="scroll-container">
+
+          <!-- 1 -->
+          <section class="scroll-section align-left"
+                   data-enter="0.00"
+                   data-leave="0.22"
+                   data-animation="slide-left"
+                   id="services">
+            <div class="section-inner glass-morphism luxury-panel">
+              <span class="section-label">001 / Услуги</span>
+              <h2 class="section-heading">Лечение</h2>
+
+              <div class="feature-list">
+                <div class="feature-item">
+                  <div class="feature-icon">I</div>
+                  <div>
+                    <h3>Имплантация</h3>
+                    <p>Восстановление одного зуба, нескольких единиц или всей челюсти с точным хирургическим планом.</p>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-icon">II</div>
+                  <div>
+                    <h3>Ортодонтия</h3>
+                    <p>Элайнеры и брекет-системы для исправления прикуса, скученности и эстетики улыбки.</p>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-icon">III</div>
+                  <div>
+                    <h3>Виниры</h3>
+                    <p>Эстетическая коррекция формы, цвета и пропорций зубов без компромиссов по естественности.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2 -->
+          <section class="scroll-section align-right"
+                   data-enter="0.24"
+                   data-leave="0.46"
+                   data-animation="slide-right"
+                   id="why-us">
+            <div class="section-inner glass-morphism luxury-panel">
+              <span class="section-label">002 / Почему мы</span>
+              <h2 class="section-heading">Качество</h2>
+              <p class="section-body">Цифровая диагностика, прозрачный план лечения и прогнозируемый результат ещё до начала лечения.</p>
+              <p class="section-body">Команда узких специалистов работает как единая система, а не как набор отдельных кабинетов.</p>
+            </div>
+          </section>
+
+          <!-- 3 -->
+          <section class="scroll-section section-stats"
+                   data-enter="0.48"
+                   data-leave="0.70"
+                   data-animation="stagger-up"
+                   id="results">
+            <div class="section-inner">
+              <span class="section-label">003 / В цифрах</span>
+              <h2 class="section-heading">Результаты</h2>
+
+              <div class="stats-grid">
+                <div class="stat">
+                  <div><span class="stat-number" data-value="15">0</span><span class="stat-suffix">лет</span></div>
+                  <span class="stat-label">Опыта</span>
+                </div>
+
+                <div class="stat">
+                  <div><span class="stat-number" data-value="45">0</span><span class="stat-suffix">+</span></div>
+                  <span class="stat-label">Клиник</span>
+                </div>
+
+                <div class="stat">
+                  <div><span class="stat-number" data-value="120">0</span><span class="stat-suffix">k</span></div>
+                  <span class="stat-label">Пациентов</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 4 -->
+          <section class="scroll-section align-left"
+                   data-enter="0.72"
+                   data-leave="0.96"
+                   data-animation="slide-left"
+                   id="process">
+            <div class="section-inner glass-morphism luxury-panel">
+              <span class="section-label">004 / Процесс</span>
+              <h2 class="section-heading">Подход</h2>
+
+              <div class="feature-list">
+                <div class="feature-item">
+                  <div class="feature-icon">I</div>
+                  <div>
+                    <h3>Диагностика</h3>
+                    <p>Снимки, анализ, цифровой протокол и понимание реальной клинической картины.</p>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-icon">II</div>
+                  <div>
+                    <h3>План лечения</h3>
+                    <p>Пошаговая стратегия с понятными сроками, логикой и ожидаемым результатом.</p>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-icon">III</div>
+                  <div>
+                    <h3>Контроль результата</h3>
+                    <p>Финальная проверка эстетики, функции и стабильности результата на длинной дистанции.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- CASES -->
+    <section id="cases" class="horizontal-cases">
+      <div class="cases-sticky">
+        <div class="cases-header reveal">
+          <span class="section-label">005 / Кейсы</span>
+          <h2 class="section-heading">Реальные результаты</h2>
+          <p class="section-body max-w-text">
+            Ниже — примеры лечения, где важна не только эстетика, но и функция, стабильность и прогнозируемость результата.
+          </p>
+        </div>
+
+        <div class="cases-track" id="cases-track">
+          <article class="case-card">
+            <div class="case-image">
+              <div class="case-placeholder">До / После</div>
+            </div>
+            <div class="case-info">
+              <h3>Виниры E-Max</h3>
+              <p>Коррекция формы и линии улыбки. 20 единиц.</p>
+              <span class="case-meta">Срок: 14 дней</span>
+            </div>
+          </article>
+
+          <article class="case-card">
+            <div class="case-image">
+              <div class="case-placeholder">До / После</div>
+            </div>
+            <div class="case-info">
+              <h3>All-on-4</h3>
+              <p>Полное восстановление жевательной функции и эстетики.</p>
+              <span class="case-meta">Срок: по этапам</span>
+            </div>
+          </article>
+
+          <article class="case-card">
+            <div class="case-image">
+              <div class="case-placeholder">До / После</div>
+            </div>
+            <div class="case-info">
+              <h3>Элайнеры</h3>
+              <p>Исправление прикуса и выравнивание зубных рядов.</p>
+              <span class="case-meta">Срок: 12 месяцев</span>
+            </div>
+          </article>
+
+          <article class="case-card">
+            <div class="case-image">
+              <div class="case-placeholder">До / После</div>
+            </div>
+            <div class="case-info">
+              <h3>Эстетическая реставрация</h3>
+              <p>Восстановление зоны улыбки после повреждений и стираемости.</p>
+              <span class="case-meta">Срок: индивидуально</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAM -->
+    <section id="team" class="section-team normal-section">
+      <div class="container">
+        <span class="section-label reveal">006 / Команда</span>
+        <h2 class="section-heading reveal">Врачи, которые отвечают за результат</h2>
+
+        <div class="team-list">
+          <div class="team-member reveal">
+            <div class="team-member-name">Иванов Алексей</div>
+            <div class="team-member-role">Главный ортопед / 15 лет опыта</div>
+          </div>
+          <div class="team-member reveal">
+            <div class="team-member-name">Смирнова Анна</div>
+            <div class="team-member-role">Ведущий ортодонт / 10 лет опыта</div>
+          </div>
+          <div class="team-member reveal">
+            <div class="team-member-name">Петров Денис</div>
+            <div class="team-member-role">Хирург-имплантолог / 12 лет опыта</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="normal-section section-block" id="faq">
+      <div class="container">
+        <div class="section-top reveal">
+          <span class="section-label">007 / FAQ</span>
+          <h2 class="section-heading">Частые вопросы</h2>
+        </div>
+
+        <div class="faq-list">
+          <details class="faq-item reveal">
+            <summary>Сколько стоит консультация?</summary>
+            <p>Первичный приём и план лечения зависят от объёма диагностики. Точную стоимость лучше уточнить при записи.</p>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>Можно ли пройти всё лечение в одной клинике?</summary>
+            <p>Да, лечение выстраивается как единая система: диагностика, терапия, хирургия, ортопедия и ортодонтия.</p>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>Сколько времени занимает имплантация?</summary>
+            <p>Зависит от клинической ситуации. На консультации врач сможет оценить сроки именно в вашем случае.</p>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>Можно ли платить поэтапно?</summary>
+            <p>Да, многие планы лечения удобно делятся на этапы — это обсуждается после диагностики.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="section-cta normal-section">
+      <div class="container contact-grid">
+        <div class="contact-copy reveal">
+          <span class="section-label">008 / Запись</span>
+          <h2 class="section-heading">Начните путь к сильной и красивой улыбке</h2>
+          <p class="section-body max-w-text">
+            Оставьте заявку — администратор свяжется с вами, ответит на вопросы и подберёт удобное время консультации.
+          </p>
+        </div>
+
+        <form class="lead-form glass-morphism reveal" id="lead-form">
+          <label>
+            <span>Имя</span>
+            <input type="text" name="name" placeholder="Ваше имя" required />
+          </label>
+
+          <label>
+            <span>Телефон</span>
+            <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" required />
+          </label>
+
+          <label>
+            <span>Что вас интересует</span>
+            <select name="service" required>
+              <option value="">Выберите услугу</option>
+              <option>Имплантация</option>
+              <option>Виниры</option>
+              <option>Ортодонтия</option>
+              <option>Консультация</option>
+            </select>
+          </label>
+
+          <button type="submit" class="cta-button form-submit">Оставить заявку</button>
+          <p class="form-note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</p>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-top">
+      <h2 class="footer-logo">ВСЕ СВОИ</h2>
+    </div>
+
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Адрес</h4>
+        <p>г. Москва, ул. Примерная, 12</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Связь</h4>
+        <p>+7 (999) 000-00-00<br />hello@vsesvoi.ru</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Режим работы</h4>
+        <p>Пн–Вс<br />09:00 — 21:00</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Соцсети</h4>
+        <a href="#">Instagram</a><br />
+        <a href="#">Telegram</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 Все Свои. Все права защищены.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
