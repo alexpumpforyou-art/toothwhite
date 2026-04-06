@@ -208,7 +208,7 @@ body {
 @media (max-width: 768px) {
   .hero-heading { max-width: 100vw; margin-bottom: 1rem; font-size: clamp(2rem, 12vw, 3.5rem); }
   .align-left, .align-right { justify-content: center; padding: 0 5vw !important; }
-  .align-left .section-inner, .align-right .section-inner { max-width: 100%; width: 100%; padding: 2.5rem 5vw; }
+  .align-left .section-inner, .align-right .section-inner { max-width: 100%; width: 100%; padding: 2.5rem 5vw; margin-top: 15vh; }
   .header-nav { display: none; }
   .site-header { padding: 1.5rem 4vw; }
   .feature-list { gap: 1.5rem; margin-top: 2rem; }

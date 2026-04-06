@@ -7,7 +7,7 @@
   "use strict";
 
   const FRAME_SPEED = 1.0; 
-  const IMAGE_SCALE = 1.001; // Full cover mode (user requested full-width edges)
+  const IMAGE_SCALE = 1.02; // slightly scale to hide border edge pixel glitches
   const FIRST_BATCH = 20;
 
   const loader      = document.getElementById("loader");
