@@ -118,11 +118,7 @@
   }
 
   function sampleBg(i) {
-    const img = frames[i]; if (!img) return;
-    const c = document.createElement("canvas"); c.width = c.height = 1;
-    const x = c.getContext("2d"); x.drawImage(img, 0, 0, 1, 1);
-    const d = x.getImageData(0, 0, 1, 1).data;
-    bgColor = `rgb(${d[0]},${d[1]},${d[2]})`;
+    bgColor = "#ffffff";
   }
 
   function drawFrame(i) {
@@ -340,7 +336,7 @@
   }
 
   function initDarkOverlay(enter, leave) {
-    const f = 0.04;
+    const f = 0.02; // Reduced to sync fade directly into 2% gaps
     ScrollTrigger.create({
       trigger: scrollBox, start: "top top", end: "bottom bottom", scrub: true,
       onUpdate: (self) => {
