@@ -275,9 +275,9 @@
         trigger: scrollBox, start: "top top", end: "bottom bottom",
         onUpdate: (self) => {
           const p = self.progress;
-          const fadeIn = 0.08, fadeOut = 0.03;
+          const fadeDur = 0.03;
           if (p >= enter && p <= leave) {
-            const innerP = Math.min(1, (p - enter) / fadeIn);
+            const innerP = Math.min(1, (p - enter) / fadeDur);
             section.style.opacity = innerP;
             tl.progress(innerP);
           } else if (p > leave) {
