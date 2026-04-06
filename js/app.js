@@ -6,9 +6,9 @@
 (function () {
   "use strict";
 
-  const FRAME_SPEED = 2.0; 
+  const FRAME_SPEED = 1.0; 
   const IMAGE_SCALE = 1.001; // Full cover mode (user requested full-width edges)
-  const FIRST_BATCH = 10;
+  const FIRST_BATCH = 20;
 
   const loader      = document.getElementById("loader");
   const loaderBar   = document.getElementById("loader-bar");
@@ -44,59 +44,68 @@
       .join("<br>");
   }
 
-  function detectFrameCount() {
-    return new Promise((resolve) => {
-      let low = 1, high = 1500, last = 0;
-      const probe = (n) => new Promise((r) => {
-        const img = new Image();
-        img.onload = () => r(true);
-        img.onerror = () => r(false);
-        img.src = `frames/frame_${String(n).padStart(4, "0")}.webp`;
-      });
-      (async () => {
-        if (!(await probe(1))) { resolve(0); return; }
-        if (await probe(120)) { last = 120; low = 121; } // Quick jump since we know it's 120
-        while (low <= high) {
-          const mid = (low + high) >> 1;
-          if (await probe(mid)) { last = mid; low = mid + 1; } else high = mid - 1;
-        }
-        resolve(last);
-      })();
-    });
-  }
+  const TOTAL_FRAMES_COUNT = 120; // Hardcoded to prevent 404 console errors from auto-detect
 
   async function preloadFrames() {
-    totalFrames = await detectFrameCount();
+    totalFrames = TOTAL_FRAMES_COUNT;
+    
+    // Instead of scrolling on scrollBox (which is absolute now), 
+    // we set the height of the outer #video-sequence
+    const vidSeq = document.getElementById("video-sequence");
+    
     if (!totalFrames) { 
-      scrollBox.style.height = "800vh";
+      if(vidSeq) vidSeq.style.height = "800vh";
       hideLoader(); 
       return; 
     }
 
-    let loaded = 0;
-    const load = (i) => new Promise((res) => {
-      const img = new Image();
-      img.onload = () => { frames[i] = img; loaded++; update(); res(); };
-      img.onerror = () => { loaded++; update(); res(); };
-      img.src = `frames/frame_${String(i + 1).padStart(4, "0")}.webp`;
-    });
-    const update = () => {
-      const p = Math.round((loaded / totalFrames) * 100);
-      loaderBar.style.width = p + "%";
-      loaderPct.textContent = p + "%";
-    };
+    function preloadImages() {
+      let loaded = 0;
+      let currentIndex = 1;
+      const maxWorkers = 8; // Limit concurrent requests to prevent server hang
 
-    const b1 = [];
-    for (let i = 0; i < Math.min(FIRST_BATCH, totalFrames); i++) b1.push(load(i));
-    await Promise.all(b1);
-    resizeCanvas(); sampleBg(0); drawFrame(0);
+      function worker() {
+        if (currentIndex > totalFrames) return;
+        const idx = currentIndex++;
+        const num = (idx).toString().padStart(4, "0");
+        const img = new Image();
+        const onComplete = () => {
+          loaded++;
+          if (img.complete && img.naturalWidth !== 0) {
+            frames[idx - 1] = img;
+             if (idx - 1 === currentFrame) {
+              requestAnimationFrame(() => drawFrame(currentFrame));
+             }
+          }
 
-    const b2 = [];
-    for (let i = FIRST_BATCH; i < totalFrames; i++) b2.push(load(i));
-    await Promise.all(b2);
+          const firstBatch = Math.min(10, totalFrames);
+          
+          if (loaded <= firstBatch) {
+            loaderBar.style.width = (loaded / firstBatch) * 100 + "%";
+            loaderPct.innerText = Math.round((loaded / firstBatch) * 100) + "%";
+          }
 
-    scrollBox.style.height = "850vh"; // 800vh+ from skill
-    hideLoader();
+          if (loaded === firstBatch) {
+            hideLoader();
+          } 
+          
+          if (loaded < totalFrames) {
+            worker();
+          }
+        };
+
+        img.onload = onComplete;
+        img.onerror = onComplete;
+        img.src = `frames/frame_${num}.webp`;
+      }
+
+      // Start workers
+      for (let i = 0; i < maxWorkers; i++) worker();
+    }
+
+    preloadImages();
+    resizeCanvas();
+    if(vidSeq) vidSeq.style.height = "500vh";
   }
 
   function resizeCanvas() {
@@ -121,10 +130,10 @@
     const cw = canvas.width / (devicePixelRatio || 1);
     const ch = canvas.height / (devicePixelRatio || 1);
     const iw = img.naturalWidth, ih = img.naturalHeight;
-    // Strict padded cover
     const scale = Math.max(cw / iw, ch / ih) * IMAGE_SCALE;
     const dw = iw * scale, dh = ih * scale;
     const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
+    
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, cw, ch);
     ctx.drawImage(img, dx, dy, dw, dh);
@@ -134,6 +143,8 @@
   addEventListener("resize", () => { resizeCanvas(); if (frames[currentFrame]) drawFrame(currentFrame); });
 
   function hideLoader() {
+    sampleBg(0);
+    drawFrame(0);
     loader.classList.add("hidden");
     lenis.start();
     animateHero();
@@ -155,7 +166,49 @@
     initSectionAnimations();
     initCounters();
     initMarquee();
-    if (darkOverlay) initDarkOverlay(0.44, 0.68); // Overlay just for stats bounds
+    if (document.getElementById("dark-overlay")) initDarkOverlay(0.44, 0.64); // Matches new Stats bounds
+
+    // New Sections Animations
+    initHorizontalGallery();
+    initTeamAnimations();
+  }
+
+  function initHorizontalGallery() {
+    const track = document.getElementById("cases-track");
+    if (!track) return;
+    
+    // Calculate distance to move based on track width vs window width
+    function getScrollAmount() {
+      return -(track.scrollWidth - window.innerWidth + window.innerWidth * 0.1);
+    }
+
+    gsap.to(track, {
+      x: getScrollAmount,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".horizontal-cases",
+        start: "top top",
+        end: () => `+=${getScrollAmount() * -1}`,
+        pin: true,
+        scrub: 1,
+        invalidateOnRefresh: true
+      }
+    });
+  }
+
+  function initTeamAnimations() {
+    const members = document.querySelectorAll(".team-member");
+    if(!members.length) return;
+    
+    members.forEach((member) => {
+      gsap.from(member.querySelectorAll(".team-member-name, .team-member-role"), {
+        y: 40, opacity: 0, duration: 1, ease: "power3.out", stagger: 0.1,
+        scrollTrigger: {
+          trigger: member,
+          start: "top 85%",
+        }
+      });
+    });
   }
 
   // ─── Hero Reveal ──────────────────────────
@@ -185,7 +238,9 @@
   }
 
   function positionSections() {
-    const h = scrollBox.offsetHeight;
+    const vidSeq = document.getElementById("video-sequence");
+    const h = vidSeq ? vidSeq.offsetHeight : scrollBox.offsetHeight;
+    
     document.querySelectorAll(".scroll-section:not(.section-hero)").forEach((s) => {
       const enter = parseFloat(s.dataset.enter) / 100;
       const leave = parseFloat(s.dataset.leave) / 100;
@@ -205,30 +260,31 @@
       const tl = gsap.timeline({ paused: true });
       switch (type) {
         case "fade-up":
-          tl.from(children, { y: 50, opacity: 0, stagger: 0.12, duration: 0.9, ease: "power3.out" }); break;
+          tl.from(children, { y: 50, stagger: 0.12, duration: 0.9, ease: "power3.out" }); break;
         case "slide-left":
-          tl.from(children, { x: -80, opacity: 0, stagger: 0.14, duration: 0.9, ease: "power3.out" }); break;
+          tl.from(children, { x: -80, stagger: 0.14, duration: 0.9, ease: "power3.out" }); break;
         case "slide-right":
-          tl.from(children, { x: 80, opacity: 0, stagger: 0.14, duration: 0.9, ease: "power3.out" }); break;
+          tl.from(children, { x: 80, stagger: 0.14, duration: 0.9, ease: "power3.out" }); break;
         case "scale-up":
-          tl.from(children, { scale: 0.85, opacity: 0, stagger: 0.12, duration: 1.0, ease: "power2.out" }); break;
+          tl.from(children, { scale: 0.85, stagger: 0.12, duration: 1.0, ease: "power2.out" }); break;
         case "stagger-up":
-          tl.from(children, { y: 60, opacity: 0, stagger: 0.15, duration: 0.8, ease: "power3.out" }); break;
+          tl.from(children, { y: 60, stagger: 0.15, duration: 0.8, ease: "power3.out" }); break;
       }
 
       ScrollTrigger.create({
         trigger: scrollBox, start: "top top", end: "bottom bottom",
         onUpdate: (self) => {
           const p = self.progress;
-          const fadeIn = 0.03, fadeOut = 0.03;
+          const fadeIn = 0.08, fadeOut = 0.03;
           if (p >= enter && p <= leave) {
-            section.style.opacity = Math.min(1, (p - enter) / fadeIn);
-            if (tl.progress() === 0) tl.play();
+            const innerP = Math.min(1, (p - enter) / fadeIn);
+            section.style.opacity = innerP;
+            tl.progress(innerP);
           } else if (p > leave) {
-            if (persist) { section.style.opacity = 1; }
+            if (persist) { section.style.opacity = 1; tl.progress(1); }
             else {
               section.style.opacity = Math.max(0, 1 - (p - leave) / fadeOut);
-              if (section.style.opacity == 0) tl.pause(0);
+              if (section.style.opacity == 0) { tl.pause(0); }
             }
           } else {
             section.style.opacity = 0; tl.pause(0);

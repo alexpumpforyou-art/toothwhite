@@ -35,25 +35,23 @@
     <p class="hero-tagline">Комплексное лечение, имплантация и ортодонтия экспертного уровня.</p>
   </section>
 
-  <!-- 4. Canvas (fixed, reveals via circle-wipe) -->
-  <div class="canvas-wrap" id="canvas-wrap">
-    <canvas id="canvas"></canvas>
-  </div>
+  <!-- 4. Video Sequence Wrapper (Sticks until 850vh) -->
+  <div id="video-sequence">
+    <!-- Sticky Canvas & Background Elements -->
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div id="dark-overlay"></div>
+      <div class="marquee-wrap" id="marquee-1" data-scroll-speed="-25" data-enter="20" data-leave="80">
+        <div class="marquee-text">ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ /</div>
+      </div>
+    </div>
 
-  <!-- 5. Dark Overlay -->
-  <div id="dark-overlay"></div>
-
-  <!-- 6. Marquee -->
-  <div class="marquee-wrap" id="marquee-1" data-scroll-speed="-25" data-enter="20" data-leave="80">
-    <div class="marquee-text">ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ / ВСЕ СВОИ /</div>
-  </div>
-
-  <!-- 7. Scroll Container (800vh+) -->
-  <div id="scroll-container">
+    <!-- 5. Scroll Container (Overlaying Sections) -->
+    <div id="scroll-container">
 
     <!-- Services: Left, Slide-Left -->
     <section class="scroll-section align-left"
-             data-enter="5" data-leave="25" data-animation="slide-left" id="services">
+             data-enter="2" data-leave="22" data-animation="slide-left" id="services">
       <div class="section-inner">
         <span class="section-label">001 / Услуги</span>
         <h2 class="section-heading">Лечение</h2>
@@ -85,7 +83,7 @@
 
     <!-- About: Right, Fade-Up -->
     <section class="scroll-section align-right"
-             data-enter="26" data-leave="44" data-animation="fade-up" id="about">
+             data-enter="22" data-leave="42" data-animation="fade-up" id="about">
       <div class="section-inner">
         <span class="section-label">002 / О клинике</span>
         <h2 class="section-heading">Качество</h2>
@@ -96,7 +94,7 @@
 
     <!-- Stats: Center, Stagger-Up, Requires Dark Overlay -->
     <section class="scroll-section section-stats"
-             data-enter="46" data-leave="66" data-animation="stagger-up" id="results">
+             data-enter="44" data-leave="64" data-animation="stagger-up" id="results">
       <div class="section-inner">
         <span class="section-label">003 / В цифрах</span>
         <h2 class="section-heading">Результаты</h2>
@@ -119,7 +117,7 @@
 
     <!-- Process: Left, Slide-Right -->
     <section class="scroll-section align-left"
-             data-enter="68" data-leave="84" data-animation="slide-right">
+             data-enter="66" data-leave="90" data-animation="slide-right">
       <div class="section-inner">
         <span class="section-label">004 / Процесс</span>
         <h2 class="section-heading">Подход</h2>
@@ -142,18 +140,106 @@
       </div>
     </section>
 
-    <!-- CTA: Center, Scale-Up, Persists -->
-    <section class="scroll-section section-cta"
-             data-enter="86" data-leave="100" data-animation="scale-up" data-persist="true" id="contact">
-      <div class="section-inner">
-        <span class="section-label">005 / Контакт</span>
-        <h2 class="section-heading">Начните путь</h2>
-        <p class="section-body">Запишитесь на комплексную консультацию.</p>
+  </div> <!-- End of video-sequence overlay container -->
+</div> <!-- End of video-sequence wrapper -->
+
+  <!-- 6. Horizontal Cases Gallery -->
+  <section id="cases" class="horizontal-cases">
+    <div class="cases-sticky">
+      <div class="cases-header">
+        <span class="section-label">006 / Примеры</span>
+        <h2 class="section-heading">Кейсы</h2>
+      </div>
+      <div class="cases-track" id="cases-track">
+         <div class="case-card">
+           <div class="case-image placeholder-dark"></div>
+           <div class="case-info">
+             <h3>Виниры E-Max</h3>
+             <p>Верхняя и нижняя челюсть, 20 единиц.</p>
+           </div>
+         </div>
+         <div class="case-card">
+           <div class="case-image placeholder-dark"></div>
+           <div class="case-info">
+             <h3>Имплантация All-on-4</h3>
+             <p>Полное восстановление жевательной функции.</p>
+           </div>
+         </div>
+         <div class="case-card">
+           <div class="case-image placeholder-dark"></div>
+           <div class="case-info">
+             <h3>Ортодонтия (Элайнеры)</h3>
+             <p>Исправление прикуса за 12 месяцев.</p>
+           </div>
+         </div>
+         <div class="case-card">
+           <div class="case-image placeholder-dark"></div>
+           <div class="case-info">
+             <h3>Эстетическая реставрация</h3>
+             <p>Восстановление зоны улыбки.</p>
+           </div>
+         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Team / Experts -->
+  <section id="team" class="section-team normal-section">
+    <div class="team-container">
+      <span class="section-label">007 / Команда</span>
+      <h2 class="section-heading">Эксперты</h2>
+      <div class="team-list">
+        <div class="team-member fade-up-el">
+          <div class="team-member-name">Иванов Алексей</div>
+          <div class="team-member-role">Главный Ортопед / 15 лет опыта</div>
+        </div>
+        <div class="team-member fade-up-el">
+          <div class="team-member-name">Смирнова Анна</div>
+          <div class="team-member-role">Ведущий Ортодонт / 10 лет опыта</div>
+        </div>
+        <div class="team-member fade-up-el">
+          <div class="team-member-name">Петров Денис</div>
+          <div class="team-member-role">Хирург-Имплантолог / 12 лет опыта</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. CTA / Оставить заявку -->
+  <section id="cta" class="section-cta normal-section">
+    <div class="container" style="display:flex; justify-content:center; align-items:center;">
+      <div class="section-inner glass-morphism fade-up-el" style="text-align:center;">
+        <span class="section-label">005 / Связь</span>
+        <h2 class="section-heading" style="margin-bottom:2rem;">Начните путь<br>к идеальной улыбке</h2>
         <a href="#" class="cta-button">Оставить заявку</a>
       </div>
-    </section>
+    </div>
+  </section>
 
-  </div>
+  <!-- 9. Footer -->
+  <footer class="site-footer">
+    <div class="footer-top">
+      <h2 class="footer-logo">ВСЕ СВОИ</h2>
+    </div>
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Адрес</h4>
+        <p>г. Москва, ул. Примерная, 12</p>
+      </div>
+      <div class="footer-col">
+        <h4>Связь</h4>
+        <p>+7 (999) 000-00-00<br>hello@vsesvoi.ru</p>
+      </div>
+      <div class="footer-col">
+        <h4>Соцсети</h4>
+        <a href="#">Instagram</a><br>
+        <a href="#">Telegram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Все Свои. Все права защищены.</p>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
